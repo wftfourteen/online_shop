@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .admin-container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 200px;
+            background: #304156;
+            color: #fff;
+        }
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #434a55;
+        }
+        .sidebar-menu {
+            padding: 10px 0;
+        }
+        .menu-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .menu-item:hover {
+            background: #434a55;
+        }
+        .menu-item.active {
+            background: #409EFF;
+        }
+        .main-content {
+            flex: 1;
+            overflow: auto;
+            background: #f0f2f5;
+        }
+        .content-header {
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .content-body {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="adminApp">
+        <div class="admin-container">
+            <!-- 侧边栏 -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h2>后台管理</h2>
+                </div>
+                <div class="sidebar-menu">
+                    <div class="menu-item" :class="{active: currentView === 'products'}" @click="currentView = 'products'">
+                        商品管理
+                    </div>
+                    <div class="menu-item" :class="{active: currentView === 'orders'}" @click="currentView = 'orders'">
+                        订单管理
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 主内容区 -->
+            <div class="main-content">
+                <!-- 商品管理 -->
+                <div v-if="currentView === 'products'">
+                    <div class="content-header">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2>商品管理</h2>
+                            <el-button type="primary" @click="showAddProductDialog = true">添加商品</el-button>
+                        </div>
+                    </div>
+                    <div class="content-body">
+                        <el-card>
+                            <el-table :data="products" style="width: 100%">
+                                <el-table-column prop="productId" label="ID" width="80"></el-table-column>
+                                <el-table-column label="商品图片" width="100">
+                                    <template #default="{ row }">
+                                        <img :src="row.mainImage" style="width: 60px; height: 60px; object-fit: cover;">
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="name" label="商品名称"></el-table-column>
+                                <el-table-column prop="price" label="价格" width="100">
+                                    <template #default="{ row }">¥{{ row.price }}</template>
+                                </el-table-column>
+                                <el-table-column prop="stock" label="库存" width="100"></el-table-column>
+                                <el-table-column label="状态" width="100">
+                                    <template #default="{ row }">
+                                        <el-tag :type="row.status === 1 ? 'success' : 'info'">
+                                            {{ row.status === 1 ? '上架' : '下架' }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="操作" width="250">
+                                    <template #default="{ row }">
+                                        <el-button size="small" @click="editProduct(row)">编辑</el-button>
+                                        <el-button 
+                                            size="small" 
+                                            :type="row.status === 1 ? 'warning' : 'success'"
+                                            @click="toggleProductStatus(row)">
+                                            {{ row.status === 1 ? '下架' : '上架' }}
+                                        </el-button>
+                                        <el-button size="small" type="danger" @click="deleteProduct(row.productId)">删除</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            <el-pagination
+                                v-model:current-page="productPage"
+                                v-model:page-size="productPageSize"
+                                :total="productTotal"
+                                layout="total, prev, pager, next"
+                                @current-change="loadProducts"
+                                style="margin-top: 20px; justify-content: center;">
+                            </el-pagination>
+                        </el-card>
+                    </div>
+                </div>
+                
+                <!-- 订单管理 -->
+                <div v-if="currentView === 'orders'">
+                    <div class="content-header">
+                        <h2>订单管理</h2>
+                    </div>
+                    <div class="content-body">
+                        <el-card>
+                            <el-table :data="orders" style="width: 100%">
+                                <el-table-column prop="orderId" label="订单号" width="120"></el-table-column>
+                                <el-table-column prop="username" label="用户" width="120"></el-table-column>
+                                <el-table-column prop="totalAmount" label="金额" width="100">
+                                    <template #default="{ row }">¥{{ row.totalAmount.toFixed(2) }}</template>
+                                </el-table-column>
+                                <el-table-column label="状态" width="100">
+                                    <template #default="{ row }">
+                                        <el-tag :type="getStatusType(row.status)">
+                                            {{ getStatusText(row.status) }}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="createdAt" label="下单时间" width="180">
+                                    <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+                                </el-table-column>
+                                <el-table-column label="操作" width="150">
+                                    <template #default="{ row }">
+                                        <el-button size="small" @click="viewOrderDetail(row.orderId)">查看</el-button>
+                                        <el-button 
+                                            v-if="row.status === 2" 
+                                            size="small" 
+                                            type="success"
+                                            @click="showShipDialog(row)">
+                                            发货
+                                        </el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            <el-pagination
+                                v-model:current-page="orderPage"
+                                v-model:page-size="orderPageSize"
+                                :total="orderTotal"
+                                layout="total, prev, pager, next"
+                                @current-change="loadOrders"
+                                style="margin-top: 20px; justify-content: center;">
+                            </el-pagination>
+                        </el-card>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 添加/编辑商品对话框 -->
+        <el-dialog 
+            v-model="showAddProductDialog" 
+            :title="editingProduct ? '编辑商品' : '添加商品'" 
+            width="600px">
+            <el-form :model="productForm" label-width="100px">
+                <el-form-item label="商品名称">
+                    <el-input v-model="productForm.name"></el-input>
+                </el-form-item>
+                <el-form-item label="分类ID">
+                    <el-input-number v-model="productForm.categoryId" :min="1"></el-input-number>
+                </el-form-item>
+                <el-form-item label="价格">
+                    <el-input-number v-model="productForm.price" :min="0" :precision="2"></el-input-number>
+                </el-form-item>
+                <el-form-item label="库存">
+                    <el-input-number v-model="productForm.stock" :min="0"></el-input-number>
+                </el-form-item>
+                <el-form-item label="主图URL">
+                    <el-input v-model="productForm.mainImage"></el-input>
+                </el-form-item>
+                <el-form-item label="详情图">
+                    <el-input v-model="productForm.detailImages" type="textarea" placeholder="多个URL用逗号分隔"></el-input>
+                </el-form-item>
+                <el-form-item label="描述">
+                    <el-input v-model="productForm.description" type="textarea" :rows="4"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="showAddProductDialog = false">取消</el-button>
+                <el-button type="primary" @click="saveProduct">确定</el-button>
+            </template>
+        </el-dialog>
+        
+        <!-- 发货对话框 -->
+        <el-dialog v-model="showShipDialogVisible" title="订单发货" width="400px">
+            <el-form :model="shipForm" label-width="100px">
+                <el-form-item label="物流公司">
+                    <el-input v-model="shipForm.shippingCompany"></el-input>
+                </el-form-item>
+                <el-form-item label="物流单号">
+                    <el-input v-model="shipForm.trackingNumber"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="showShipDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="shipOrder">确定</el-button>
+            </template>
+        </el-dialog>
+        
+        <!-- 订单详情对话框 -->
+        <el-dialog v-model="showOrderDetailDialog" title="订单详情" width="800px">
+            <div v-if="orderDetail">
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="订单号">{{ orderDetail.orderId }}</el-descriptions-item>
+                    <el-descriptions-item label="用户">{{ orderDetail.user?.username }}</el-descriptions-item>
+                    <el-descriptions-item label="金额">¥{{ orderDetail.totalAmount.toFixed(2) }}</el-descriptions-item>
+                    <el-descriptions-item label="状态">
+                        <el-tag :type="getStatusType(orderDetail.status)">
+                            {{ getStatusText(orderDetail.status) }}
+                        </el-tag>
+                    </el-descriptions-item>
+                    <el-descriptions-item label="下单时间" :span="2">{{ formatDate(orderDetail.createdAt) }}</el-descriptions-item>
+                </el-descriptions>
+                <h3 style="margin-top: 20px;">商品列表</h3>
+                <el-table :data="orderDetail.items" style="margin-top: 10px;">
+                    <el-table-column prop="productName" label="商品名称"></el-table-column>
+                    <el-table-column prop="price" label="单价"></el-table-column>
+                    <el-table-column prop="quantity" label="数量"></el-table-column>
+                    <el-table-column prop="subtotal" label="小计"></el-table-column>
+                </el-table>
+            </div>
+        </el-dialog>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        const API_BASE = 'http://localhost:1414';
+        const axiosInstance = axios.create({
+            baseURL: API_BASE,
+            timeout: 10000
+        });
+
+        axiosInstance.interceptors.request.use(config => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                config.headers.token = token;
+            }
+            return config;
+        });
+
+        axiosInstance.interceptors.response.use(
+            response => {
+                if (response.data.code === 0) {
+                    ElMessage.error(response.data.msg || '操作失败');
+                }
+                return response;
+            },
+            error => {
+                if (error.response && error.response.status === 401) {
+                    ElMessage.error('登录已过期');
+                    window.location.href = 'index.html';
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        const AdminApp = {
+            data() {
+                return {
+                    currentView: 'products',
+                    products: [],
+                    productPage: 1,
+                    productPageSize: 20,
+                    productTotal: 0,
+                    orders: [],
+                    orderPage: 1,
+                    orderPageSize: 20,
+                    orderTotal: 0,
+                    showAddProductDialog: false,
+                    editingProduct: null,
+                    productForm: {
+                        name: '',
+                        categoryId: 1,
+                        price: 0,
+                        stock: 0,
+                        mainImage: '',
+                        detailImages: '',
+                        description: ''
+                    },
+                    showShipDialogVisible: false,
+                    shipForm: {
+                        orderId: null,
+                        shippingCompany: '',
+                        trackingNumber: ''
+                    },
+                    showOrderDetailDialog: false,
+                    orderDetail: null
+                };
+            },
+            mounted() {
+                this.loadProducts();
+                this.loadOrders();
+            },
+            methods: {
+                async loadProducts() {
+                    try {
+                        const response = await axiosInstance.get('/admin/products', {
+                            params: {
+                                page: this.productPage,
+                                pageSize: this.productPageSize
+                            }
+                        });
+                        if (response.data.code === 1) {
+                            this.products = response.data.data.list || [];
+                            this.productTotal = response.data.data.total || 0;
+                        }
+                    } catch (error) {
+                        console.error('加载商品失败:', error);
+                    }
+                },
+                async loadOrders() {
+                    try {
+                        const response = await axiosInstance.get('/admin/orders', {
+                            params: {
+                                page: this.orderPage,
+                                pageSize: this.orderPageSize
+                            }
+                        });
+                        if (response.data.code === 1) {
+                            this.orders = response.data.data.list || [];
+                            this.orderTotal = response.data.data.total || 0;
+                        }
+                    } catch (error) {
+                        console.error('加载订单失败:', error);
+                    }
+                },
+                async saveProduct() {
+                    try {
+                        let response;
+                        if (this.editingProduct) {
+                            response = await axiosInstance.put(`/admin/products/${this.editingProduct.productId}`, this.productForm);
+                        } else {
+                            response = await axiosInstance.post('/admin/products', this.productForm);
+                        }
+                        if (response.data.code === 1) {
+                            ElMessage.success('保存成功');
+                            this.showAddProductDialog = false;
+                            this.editingProduct = null;
+                            this.productForm = {
+                                name: '',
+                                categoryId: 1,
+                                price: 0,
+                                stock: 0,
+                                mainImage: '',
+                                detailImages: '',
+                                description: ''
+                            };
+                            this.loadProducts();
+                        }
+                    } catch (error) {
+                        ElMessage.error('保存失败');
+                    }
+                },
+                editProduct(product) {
+                    this.editingProduct = product;
+                    this.productForm = {
+                        name: product.name,
+                        categoryId: product.categoryId,
+                        price: product.price,
+                        stock: product.stock,
+                        mainImage: product.mainImage,
+                        detailImages: product.detailImages || '',
+                        description: product.description || ''
+                    };
+                    this.showAddProductDialog = true;
+                },
+                async toggleProductStatus(product) {
+                    try {
+                        const newStatus = product.status === 1 ? 0 : 1;
+                        const response = await axiosInstance.put(`/admin/products/${product.productId}/status`, {
+                            status: newStatus
+                        });
+                        if (response.data.code === 1) {
+                            ElMessage.success('操作成功');
+                            this.loadProducts();
+                        }
+                    } catch (error) {
+                        ElMessage.error('操作失败');
+                    }
+                },
+                async deleteProduct(productId) {
+                    try {
+                        await ElMessageBox.confirm('确定要删除该商品吗？', '提示', {
+                            type: 'warning'
+                        });
+                        const response = await axiosInstance.delete(`/admin/products/${productId}`);
+                        if (response.data.code === 1) {
+                            ElMessage.success('删除成功');
+                            this.loadProducts();
+                        }
+                    } catch (error) {
+                        if (error !== 'cancel') {
+                            ElMessage.error('删除失败');
+                        }
+                    }
+                },
+                showShipDialog(order) {
+                    this.shipForm.orderId = order.orderId;
+                    this.shipForm.shippingCompany = '';
+                    this.shipForm.trackingNumber = '';
+                    this.showShipDialogVisible = true;
+                },
+                async shipOrder() {
+                    try {
+                        const response = await axiosInstance.put(`/admin/orders/${this.shipForm.orderId}/ship`, {
+                            trackingNumber: this.shipForm.trackingNumber,
+                            shippingCompany: this.shipForm.shippingCompany
+                        });
+                        if (response.data.code === 1) {
+                            ElMessage.success('发货成功');
+                            this.showShipDialogVisible = false;
+                            this.loadOrders();
+                        }
+                    } catch (error) {
+                        ElMessage.error('发货失败');
+                    }
+                },
+                async viewOrderDetail(orderId) {
+                    try {
+                        const response = await axiosInstance.get(`/admin/orders/${orderId}`);
+                        if (response.data.code === 1) {
+                            this.orderDetail = response.data.data;
+                            this.showOrderDetailDialog = true;
+                        }
+                    } catch (error) {
+                        ElMessage.error('加载订单详情失败');
+                    }
+                },
+                getStatusText(status) {
+                    const statusMap = {
+                        1: '待支付',
+                        2: '已支付',
+                        3: '已发货',
+                        4: '已完成',
+                        5: '已取消'
+                    };
+                    return statusMap[status] || '未知';
+                },
+                getStatusType(status) {
+                    const typeMap = {
+                        1: 'warning',
+                        2: 'info',
+                        3: 'success',
+                        4: '',
+                        5: 'danger'
+                    };
+                    return typeMap[status] || '';
+                },
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    return new Date(dateStr).toLocaleString('zh-CN');
+                }
+            }
+        };
+
+        const app = createApp(AdminApp);
+        app.mount('#adminApp');
+    </script>
+</body>
+</html>
+

@@ -8,11 +8,18 @@ import com.fourteen.service.UserService;
 import com.fourteen.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @Service
@@ -20,6 +27,9 @@ import java.util.regex.Pattern;
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserMapper userMapper;
+    
+    @Value("${file.upload.path:./uploads/avatars}")
+    private String uploadPath;
 
     // 邮箱正则（简化版）
     private static final Pattern EMAIL_PATTERN =
@@ -60,7 +70,9 @@ public class UserServiceImpl implements UserService {
             claims.put("username",u.getUsername());
             claims.put("role",u.getRole());
             String jwt= JwtUtils.GenerateToken(claims);
-            return new LoginInfo(u.getUserId(),u.getUsername(),u.getEmail(),u.getRole(),jwt);
+            LoginInfo loginInfo = new LoginInfo(u.getUserId(),u.getUsername(),u.getEmail(),u.getRole(),jwt);
+            // 设置头像（通过反射或修改LoginInfo类）
+            return loginInfo;
         }
         return null;
     }
@@ -103,6 +115,58 @@ public class UserServiceImpl implements UserService {
         }
         userMapper.updateUsername(userId, username);
         return Result.success();
+    }
+
+    @Override
+    public Result uploadAvatar(Integer userId, MultipartFile file) {
+        try {
+            // 验证文件
+            if (file == null || file.isEmpty()) {
+                return Result.error("请选择要上传的文件");
+            }
+            
+            // 验证文件类型
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null) {
+                return Result.error("文件名无效");
+            }
+            String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+            if (!extension.equals(".jpg") && !extension.equals(".jpeg") && !extension.equals(".png")) {
+                return Result.error("图片格式不支持，请上传 JPG/PNG 格式");
+            }
+            
+            // 验证文件大小（5MB）
+            if (file.getSize() > 5 * 1024 * 1024) {
+                return Result.error("图片大小超过限制，请上传≤5MB的图片");
+            }
+            
+            // 创建上传目录
+            Path uploadDir = Paths.get(uploadPath);
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+            
+            // 生成唯一文件名
+            String fileName = UUID.randomUUID().toString() + extension;
+            Path filePath = uploadDir.resolve(fileName);
+            
+            // 保存文件
+            Files.copy(file.getInputStream(), filePath);
+            
+            // 更新用户头像URL
+            String avatarUrl = "/avatars/" + fileName;
+            userMapper.updateAvatar(userId, avatarUrl);
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("avatarUrl", avatarUrl);
+            Result result = Result.success(data);
+            result.setMsg("头像上传成功");
+            return result;
+            
+        } catch (IOException e) {
+            log.error("头像上传失败", e);
+            return Result.error("头像上传失败：" + e.getMessage());
+        }
     }
 
 }

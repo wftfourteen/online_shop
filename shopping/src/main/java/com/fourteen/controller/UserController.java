@@ -6,6 +6,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @Slf4j
@@ -14,7 +17,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/user")
+    @GetMapping
     public Result getUserInfo(HttpServletRequest request){
         Integer userId = (Integer)request.getAttribute("userId");
         log.info("请求用户个人信息：{}",userId);
@@ -22,10 +25,24 @@ public class UserController {
     }
 
     @PutMapping
-    public  Result updateUsername(HttpServletRequest request, @RequestParam String username){
+    public Result updateUserInfo(HttpServletRequest request, @RequestBody Map<String, String> updateRequest){
         Integer userId = (Integer)request.getAttribute("userId");
-        log.info("更改个人昵称{}",userId);
-        return userService.updataUsername(userId,username);
+        String username = updateRequest.get("username");
+        log.info("更改个人信息 userId={}, username={}", userId, username);
+        if (username != null) {
+            return userService.updataUsername(userId, username);
+        }
+        return Result.success();
+    }
+
+    /**
+     * 头像上传接口
+     */
+    @PostMapping("/avatar")
+    public Result uploadAvatar(HttpServletRequest request, @RequestParam("avatar") MultipartFile file) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        log.info("用户上传头像: userId={}", userId);
+        return userService.uploadAvatar(userId, file);
     }
 
     /**

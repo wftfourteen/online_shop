@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.ac.cn//DTD Mapper 3.0//EN"
+        "https://mybatis.ac.cn/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fourteen.mapper.ProductsMapper">
+    <select id="list" resultType="com.fourteen.pojo.Product">
+        select product_id, name, category_id, price, stock, main_image, detail_images, 
+               description, status, created_at, updated_at
+        from products
+        <where>
+            status = 1
+            <if test="name != null and name != ''">
+                and name like concat('%',#{name},'%')
+            </if>
+            <if test="minPrice != null">
+                and price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                and price &lt;= #{maxPrice}
+            </if>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+        </where>
+        <choose>
+            <when test="sort == 'price_asc'">
+                order by price asc
+            </when>
+            <when test="sort == 'price_desc'">
+                order by price desc
+            </when>
+            <otherwise>
+                order by created_at desc
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="findById" resultType="com.fourteen.pojo.Product">
+        select product_id, name, category_id, price, stock, main_image, detail_images, 
+               description, status, created_at, updated_at
+        from products
+        where product_id = #{productId}
+    </select>
+    
+    <!-- 查询所有商品（包括下架的），用于后台管理 -->
+    <select id="listAll" resultType="com.fourteen.pojo.Product">
+        select product_id, name, category_id, price, stock, main_image, detail_images, 
+               description, status, created_at, updated_at
+        from products
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%',#{name},'%')
+            </if>
+            <if test="minPrice != null">
+                and price &gt;= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                and price &lt;= #{maxPrice}
+            </if>
+        </where>
+        <choose>
+            <when test="sort == 'price_asc'">
+                order by price asc
+            </when>
+            <when test="sort == 'price_desc'">
+                order by price desc
+            </when>
+            <otherwise>
+                order by created_at desc
+            </otherwise>
+        </choose>
+    </select>
+</mapper>

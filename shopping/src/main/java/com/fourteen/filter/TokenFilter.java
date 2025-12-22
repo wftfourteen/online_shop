@@ -13,15 +13,48 @@ import java.io.IOException;
 @Slf4j
 public class TokenFilter implements Filter {
 
+    /**
+     * 判断是否为公开接口（不需要Token验证）
+     */
+    private boolean isPublicEndpoint(String requestURI, String method) {
+
+        // POST /login - 登录接口
+        if (requestURI.equals("/login") && "POST".equals(method)) {
+            return true;
+        }
+        // POST /register - 注册接口
+        if (requestURI.equals("/register") && "POST".equals(method)) {
+            return true;
+        }
+        // GET /register/check-username - 用户名验证接口
+        if (requestURI.equals("/register/check-username") && "GET".equals(method)) {
+            return true;
+        }
+        // GET /register/check-email - 邮箱验证接口
+        if (requestURI.equals("/register/check-email") && "GET".equals(method)) {
+            return true;
+        }
+        // GET /products - 商品列表接口（公开）
+        if (requestURI.startsWith("/products") && "GET".equals(method)) {
+            return true;
+        }
+        // GET /products/search - 商品搜索接口（公开）
+        if (requestURI.equals("/products/search") && "GET".equals(method)) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        String requestURI = request.getRequestURI();//资源访问路径 e.g. /login/emp
+        String requestURI = request.getRequestURI();
         String method = request.getMethod();
         
-        log.info("TokenFilter拦截请求: {} {}", method, requestURI);
+        log.info("TokenFilter拦截请求: {} {} {}", method, requestURI,isPublicEndpoint(requestURI, method));
+
 
         // 公开接口，不需要Token验证
         if (isPublicEndpoint(requestURI, method)) {
@@ -77,26 +110,5 @@ public class TokenFilter implements Filter {
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
-    /**
-     * 判断是否为公开接口（不需要Token验证）
-     */
-    private boolean isPublicEndpoint(String requestURI, String method) {
-        // POST /login - 登录接口
-        if (requestURI.equals("/login") && "POST".equals(method)) {
-            return true;
-        }
-        // POST /register - 注册接口
-        if (requestURI.equals("/register") && "POST".equals(method)) {
-            return true;
-        }
-        // GET /register/check-username - 用户名验证接口
-        if (requestURI.equals("/register/check-username") && "GET".equals(method)) {
-            return true;
-        }
-        // GET /register/check-email - 邮箱验证接口
-        if (requestURI.equals("/register/check-email") && "GET".equals(method)) {
-            return true;
-        }
-        return false;
-    }
+
 }

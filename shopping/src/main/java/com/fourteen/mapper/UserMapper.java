@@ -33,4 +33,7 @@ public interface UserMapper {
 
     @Update("update user set username=#{username} where user_id=#{userId}")
     void updateUsername(Integer userId, String username);
+    
+    @Update("update user set avatar=#{avatarUrl}, updated_at=CURRENT_TIMESTAMP where user_id=#{userId}")
+    void updateAvatar(Integer userId, String avatarUrl);
 }
