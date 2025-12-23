@@ -45,13 +45,12 @@ public class OrderServiceImpl implements OrderService {
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> items = (List<Map<String, Object>>) orderRequest.get("items");
             
-            // 验证收货地址
-            if (addressId == null) {
-                return Result.error("请选择收货地址");
-            }
-            UserAddress address = userAddressMapper.findById(addressId, userId);
-            if (address == null) {
-                return Result.error("收货地址不存在");
+            // 验证收货地址（可选）
+            if (addressId != null) {
+                UserAddress address = userAddressMapper.findById(addressId, userId);
+                if (address == null) {
+                    return Result.error("收货地址不存在");
+                }
             }
             
             // 验证购物车商品
@@ -96,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
             order.setUserId(userId);
             order.setTotalAmount(totalAmount);
             order.setStatus(1); // 待支付
-            order.setAddressId(addressId);
+            order.setAddressId(addressId); // 可以为null
             order.setRemark(remark);
             orderMapper.addOrder(order);
             
@@ -110,8 +109,19 @@ public class OrderServiceImpl implements OrderService {
                 productsMapper.updateStock(item.getProductId(), product.getStock() - item.getQuantity());
             }
             
-            // 清空购物车（可选，根据需求决定）
-            // shoppingCartMapper.deleteByUserId(userId);
+            // 删除已购买商品的购物车项
+            try {
+                for (Map<String, Object> item : items) {
+                    Integer cartId = (Integer) item.get("cartId");
+                    if (cartId != null) {
+                        shoppingCartMapper.deleteById(cartId, userId);
+                    }
+                }
+                log.info("已清除已购买商品的购物车项");
+            } catch (Exception e) {
+                log.warn("清除购物车项失败", e);
+                // 不影响订单创建
+            }
             
             Map<String, Object> data = new HashMap<>();
             data.put("orderId", order.getOrderId());
@@ -180,9 +190,13 @@ public class OrderServiceImpl implements OrderService {
         data.put("createdAt", order.getCreatedAt());
         data.put("updatedAt", order.getUpdatedAt());
         
-        // 获取收货地址
-        UserAddress address = userAddressMapper.findById(order.getAddressId(), userId);
-        data.put("address", address);
+        // 获取收货地址（如果有）
+        if (order.getAddressId() != null) {
+            UserAddress address = userAddressMapper.findById(order.getAddressId(), userId);
+            data.put("address", address);
+        } else {
+            data.put("address", null);
+        }
         
         // 获取订单商品
         List<OrderItem> items = orderMapper.findItemsByOrderId(orderId);

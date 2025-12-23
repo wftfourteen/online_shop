@@ -50,6 +50,46 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
+    public void sendPaymentSuccessEmail(String toEmail, Integer orderId, Double totalAmount, String paymentMethod) {
+        if (mailSender == null) {
+            log.warn("邮件服务未配置，跳过发送支付成功邮件：orderId={}, toEmail={}", orderId, toEmail);
+            return;
+        }
+        
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject("支付成功 - 订单号：" + orderId);
+            
+            String paymentMethodName = "支付宝";
+            if ("wechat".equalsIgnoreCase(paymentMethod)) {
+                paymentMethodName = "微信支付";
+            } else if ("alipay".equalsIgnoreCase(paymentMethod)) {
+                paymentMethodName = "支付宝";
+            }
+            
+            message.setText(String.format(
+                "尊敬的客户，\n\n" +
+                "您的订单支付成功！\n\n" +
+                "订单号：%d\n" +
+                "支付金额：¥%.2f\n" +
+                "支付方式：%s\n\n" +
+                "您的订单已确认，我们将尽快为您安排发货。\n\n" +
+                "感谢您的购买！\n\n" +
+                "此致\n" +
+                "购物网站团队",
+                orderId, totalAmount, paymentMethodName
+            ));
+            
+            mailSender.send(message);
+            log.info("支付成功邮件发送成功：orderId={}, toEmail={}", orderId, toEmail);
+        } catch (Exception e) {
+            log.error("发送支付成功邮件失败：orderId={}, toEmail={}", orderId, toEmail, e);
+        }
+    }
+
+    @Override
     public void sendShippingNotificationEmail(String toEmail, Integer orderId, String trackingNumber) {
         if (mailSender == null) {
             log.warn("邮件服务未配置，跳过发送发货通知邮件：orderId={}, toEmail={}", orderId, toEmail);

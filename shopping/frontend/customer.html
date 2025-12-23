@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品列表 - 在线购物平台</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .product-container {
+            margin-top: 20px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state img {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <el-container class="app-container">
+            <el-header class="app-header">
+                <div class="header-content">
+                    <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
+                    <div class="header-right">
+                        <el-input 
+                            v-model="searchKeyword" 
+                            placeholder="搜索商品"
+                            style="width: 300px"
+                            @keyup.enter="handleSearch"
+                            clearable>
+                            <template #prefix>
+                                <el-icon><Search /></el-icon>
+                            </template>
+                        </el-input>
+                        <div class="cart-icon" @click="goToCart">
+                            <el-icon :size="24"><ShoppingCart /></el-icon>
+                            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+                        </div>
+                        <el-dropdown @command="handleCommand">
+                            <span class="user-info">
+                                <el-avatar :src="userInfo.avatar" :size="32"></el-avatar>
+                                <span style="margin-left: 8px">{{ userInfo.username }}</span>
+                                <el-icon><ArrowDown /></el-icon>
+                            </span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                                    <el-dropdown-item command="orders">我的订单</el-dropdown-item>
+                                    <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                </div>
+            </el-header>
+            <el-main class="main-content">
+                <div class="filter-bar">
+                    <div class="filter-row">
+                        <span>价格区间：</span>
+                        <el-input-number v-model="filters.minPrice" :min="0" :precision="2" placeholder="最低价" style="width: 150px"></el-input-number>
+                        <span>-</span>
+                        <el-input-number v-model="filters.maxPrice" :min="0" :precision="2" placeholder="最高价" style="width: 150px"></el-input-number>
+                        <span style="margin-left: 20px">排序：</span>
+                        <el-radio-group v-model="filters.sort" @change="loadProducts">
+                            <el-radio-button label="default">默认</el-radio-button>
+                            <el-radio-button label="price_asc">价格低到高</el-radio-button>
+                            <el-radio-button label="price_desc">价格高到低</el-radio-button>
+                        </el-radio-group>
+                    </div>
+                </div>
+                
+                <div v-loading="loading" class="product-container">
+                    <div v-if="products.length === 0 && !loading" class="empty-state">
+                        <el-empty description="暂无商品"></el-empty>
+                    </div>
+                    <div v-else class="product-grid">
+                        <div v-for="product in products" :key="product.productId" class="product-card" @click="goToDetail(product.productId)">
+                            <img :src="product.mainImage || '/default-product.png'" :alt="product.name" class="product-image" @error="handleImageError">
+                            <div class="product-info">
+                                <div class="product-name">{{ product.name }}</div>
+                                <div class="product-price">¥{{ product.price.toFixed(2) }}</div>
+                                <div class="product-stock">库存: {{ product.stockStatus }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div v-if="products.length > 0" class="pagination-container">
+                        <el-pagination
+                            v-model:current-page="pagination.page"
+                            :page-size="pagination.pageSize"
+                            :total="pagination.total"
+                            layout="total, prev, pager, next, jumper"
+                            @current-change="handlePageChange">
+                        </el-pagination>
+                    </div>
+                </div>
+            </el-main>
+        </el-container>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script src="https://unpkg.com/element-plus/icons-vue/dist/index.iife.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/customer.js"></script>
+</body>
+</html>

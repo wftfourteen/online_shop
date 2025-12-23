@@ -42,22 +42,21 @@ public class PaymentServiceImpl implements PaymentService {
         }
         
         // 模拟支付处理（实际应该调用第三方支付接口）
-        // 这里简单模拟支付成功
+        // 这里直接模拟支付成功，无需延迟
         try {
-            // 模拟支付延迟
-            Thread.sleep(500);
-            
             // 更新订单状态为已支付
             orderMapper.updateStatus(orderId, 2); // 2: 已支付
             
             log.info("订单支付成功：orderId={}, userId={}, paymentMethod={}, amount={}", 
                     orderId, userId, paymentMethod, order.getTotalAmount());
             
-            // 发送支付成功邮件通知
+            // 发送支付成功邮件通知（异步发送，不阻塞）
             try {
                 User user = userMapper.findByUserId(userId);
                 if (user != null && user.getEmail() != null) {
-                    emailService.sendOrderConfirmationEmail(user.getEmail(), orderId, order.getTotalAmount());
+                    // 发送支付成功确认邮件
+                    emailService.sendPaymentSuccessEmail(user.getEmail(), orderId, order.getTotalAmount(), paymentMethod);
+                    log.info("支付成功邮件已发送：orderId={}, email={}", orderId, user.getEmail());
                 }
             } catch (Exception e) {
                 log.error("发送支付成功邮件失败", e);
@@ -69,12 +68,10 @@ public class PaymentServiceImpl implements PaymentService {
             data.put("status", 2);
             data.put("paymentMethod", paymentMethod);
             data.put("amount", order.getTotalAmount());
+            data.put("message", "支付成功！");
             
             return Result.success(data);
             
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return Result.error("支付处理失败");
         } catch (Exception e) {
             log.error("支付失败", e);
             return Result.error("支付失败：" + e.getMessage());

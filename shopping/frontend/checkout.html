@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单确认</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .checkout-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .checkout-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .address-item {
+            padding: 16px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .address-item:hover {
+            border-color: #409eff;
+        }
+        .address-item.selected {
+            border-color: #409eff;
+            background: #ecf5ff;
+        }
+        .product-row {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .product-row:last-child {
+            border-bottom: none;
+        }
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 16px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-size: 16px;
+        }
+        .summary-total {
+            font-size: 24px;
+            font-weight: 600;
+            color: #f56c6c;
+            border-top: 2px solid #eee;
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <el-container class="app-container">
+            <el-header class="app-header">
+                <div class="header-content">
+                    <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
+                    <div class="header-right">
+                        <el-dropdown @command="handleCommand">
+                            <span class="user-info">
+                                <el-avatar :src="userInfo.avatar" :size="32"></el-avatar>
+                                <span style="margin-left: 8px">{{ userInfo.username }}</span>
+                            </span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                                    <el-dropdown-item command="orders">我的订单</el-dropdown-item>
+                                    <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                </div>
+            </el-header>
+            <el-main>
+                <div class="checkout-container">
+                    <h2 style="margin-bottom: 20px">确认订单信息</h2>
+                    
+                    <div v-loading="loading">
+                        <!-- 收货地址 -->
+                        <div class="checkout-section">
+                            <div class="section-title">
+                                收货地址 <span style="font-size: 14px; font-weight: normal; color: #999">(可选)</span>
+                            </div>
+                            <div v-if="addresses.length === 0">
+                                <el-empty description="暂无收货地址，可稍后在个人中心添加">
+                                    <el-button type="primary" text @click="goToAddAddress">去添加地址</el-button>
+                                </el-empty>
+                            </div>
+                            <div v-else>
+                                <div 
+                                    v-for="addr in addresses" 
+                                    :key="addr.addressId"
+                                    class="address-item"
+                                    :class="{ selected: selectedAddressId === addr.addressId }"
+                                    @click="selectedAddressId = addr.addressId">
+                                    <div style="display: flex; justify-content: space-between; align-items: start">
+                                        <div>
+                                            <div style="font-weight: 600; margin-bottom: 8px">
+                                                {{ addr.receiverName }} {{ addr.receiverPhone }}
+                                            </div>
+                                            <div style="color: #666">
+                                                {{ addr.province }} {{ addr.city }} {{ addr.district }} {{ addr.detailAddress }}
+                                            </div>
+                                        </div>
+                                        <el-icon v-if="selectedAddressId === addr.addressId" :size="24" color="#409eff">
+                                            <Check />
+                                        </el-icon>
+                                    </div>
+                                </div>
+                                <el-button type="primary" text @click="goToAddAddress" style="margin-top: 12px">
+                                    <el-icon><Plus /></el-icon>
+                                    添加新地址
+                                </el-button>
+                            </div>
+                        </div>
+                        
+                        <!-- 商品信息 -->
+                        <div class="checkout-section">
+                            <div class="section-title">商品信息</div>
+                            <div v-if="orderItems.length === 0" class="empty-state">
+                                <el-empty description="购物车为空"></el-empty>
+                            </div>
+                            <div v-else>
+                                <div v-for="item in orderItems" :key="item.productId" class="product-row">
+                                    <img :src="item.mainImage || '/default-product.png'" :alt="item.name" class="product-image">
+                                    <div style="flex: 1">
+                                        <div style="font-weight: 600; margin-bottom: 8px">{{ item.name }}</div>
+                                        <div style="color: #999; font-size: 14px">数量：{{ item.quantity }}</div>
+                                    </div>
+                                    <div style="font-size: 18px; font-weight: 600; color: #f56c6c; width: 120px; text-align: right">
+                                        ¥{{ (item.price * item.quantity).toFixed(2) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 订单备注 -->
+                        <div class="checkout-section">
+                            <div class="section-title">订单备注</div>
+                            <el-input 
+                                v-model="remark" 
+                                type="textarea" 
+                                :rows="3"
+                                placeholder="请输入订单备注（选填）"
+                                maxlength="200"
+                                show-word-limit>
+                            </el-input>
+                        </div>
+                        
+                        <!-- 费用明细 -->
+                        <div class="checkout-section">
+                            <div class="section-title">费用明细</div>
+                            <div class="summary-row">
+                                <span>商品总价</span>
+                                <span>¥{{ totalAmount.toFixed(2) }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>运费</span>
+                                <span>{{ shippingFee > 0 ? '¥' + shippingFee.toFixed(2) : '免运费' }}</span>
+                            </div>
+                            <div class="summary-row summary-total">
+                                <span>实付金额</span>
+                                <span>¥{{ finalAmount.toFixed(2) }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 提交按钮 -->
+                        <div style="position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #eee; margin-top: 20px; border-radius: 8px; box-shadow: 0 -2px 8px rgba(0,0,0,0.1)">
+                            <div style="display: flex; justify-content: space-between; align-items: center">
+                                <div>
+                                    <span style="color: #666">实付金额：</span>
+                                    <span style="font-size: 24px; font-weight: 600; color: #f56c6c">¥{{ finalAmount.toFixed(2) }}</span>
+                                </div>
+                                <el-button 
+                                    type="danger" 
+                                    size="large" 
+                                    style="padding: 12px 40px"
+                                    :disabled="orderItems.length === 0"
+                                    :loading="submitting"
+                                    @click="submitOrder">
+                                    提交订单
+                                </el-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </el-main>
+        </el-container>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script src="https://unpkg.com/element-plus/icons-vue/dist/index.iife.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/checkout.js"></script>
+</body>
+</html>

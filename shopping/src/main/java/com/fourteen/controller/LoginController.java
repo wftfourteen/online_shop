@@ -18,10 +18,10 @@ public class LoginController {
 
     @PostMapping
     public Result login(@RequestBody Map<String, String> loginRequest){
-        String account = loginRequest.get("account");
+        String username = loginRequest.get("username");
         String password = loginRequest.get("password");
-        log.info("用户登录：{},{}",account,password);
-        LoginInfo loginInfo = userService.login(account,password);
+        log.info("用户登录：{},{}",username,password);
+        LoginInfo loginInfo = userService.login(username,password);
         if(loginInfo!=null){
             // 获取用户完整信息以获取头像
             com.fourteen.pojo.Result userResult = userService.getUserInfoById(loginInfo.getUserId());

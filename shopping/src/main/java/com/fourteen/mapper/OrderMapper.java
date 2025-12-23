@@ -9,9 +9,7 @@ import java.util.List;
 @Mapper
 public interface OrderMapper {
     
-    @Insert("insert into orders (user_id, total_amount, status, address_id, remark, created_at, updated_at) " +
-            "values (#{userId}, #{totalAmount}, #{status}, #{addressId}, #{remark}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)")
-    @Options(useGeneratedKeys = true, keyProperty = "orderId")
+    // addOrder方法使用XML映射文件中的动态SQL，支持addressId为null
     void addOrder(Order order);
     
     @Select("select order_id, user_id, total_amount, status, address_id, remark, created_at, updated_at " +

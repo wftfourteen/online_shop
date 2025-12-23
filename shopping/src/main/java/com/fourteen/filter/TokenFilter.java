@@ -18,6 +18,9 @@ public class TokenFilter implements Filter {
      */
     private boolean isPublicEndpoint(String requestURI, String method) {
 
+        if("OPTIONS".equals(method)) {
+            return true;
+        }
         // POST /login - 登录接口
         if (requestURI.equals("/login") && "POST".equals(method)) {
             return true;
@@ -53,7 +56,7 @@ public class TokenFilter implements Filter {
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
         
-        log.info("TokenFilter拦截请求: {} {} {}", method, requestURI,isPublicEndpoint(requestURI, method));
+        log.info("TokenFilter拦截请求: {} {}", method, requestURI);
 
 
         // 公开接口，不需要Token验证
@@ -63,7 +66,13 @@ public class TokenFilter implements Filter {
             return;
         }
 
-        String token = request.getHeader("token");
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7); // 去掉 "Bearer "
+        }
+        if ((token == null || token.isEmpty()) && request.getHeader("token") != null) {
+            token = request.getHeader("token");
+        }
 
         if (token == null || token.isEmpty()) {
             log.info("令牌为空，响应401: {}", requestURI);

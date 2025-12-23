@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家管理</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div id="app">
+        <el-container class="admin-container">
+            <el-header class="admin-header">
+                <div class="header-content">
+                    <span class="logo-link">🛒 商家管理平台</span>
+                    <div class="header-right">
+                        <el-dropdown @command="handleCommand">
+                            <span class="user-info">
+                                <el-avatar :src="userInfo.avatar" :size="32"></el-avatar>
+                                <span style="margin-left: 8px">{{ userInfo.username }}</span>
+                            </span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item command="profile">个人信息</el-dropdown-item>
+                                    <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                </div>
+            </el-header>
+            <el-main class="admin-main" style="display: flex">
+                <div class="admin-aside">
+                    <el-menu :default-active="activeMenu" @select="handleMenuSelect">
+                        <el-menu-item index="products">
+                            <el-icon><Goods /></el-icon>
+                            <span>商品管理</span>
+                        </el-menu-item>
+                        <el-menu-item index="orders">
+                            <el-icon><List /></el-icon>
+                            <span>订单管理</span>
+                        </el-menu-item>
+                    </el-menu>
+                </div>
+                <div class="admin-content">
+                    <!-- 商品管理 -->
+                    <div v-if="activeMenu === 'products'">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px">
+                            <h2>商品管理</h2>
+                            <el-button type="primary" @click="showProductDialog">添加商品</el-button>
+                        </div>
+                        <el-table :data="products" v-loading="loading">
+                            <el-table-column prop="productId" label="ID" width="80"></el-table-column>
+                            <el-table-column prop="name" label="商品名称"></el-table-column>
+                            <el-table-column prop="price" label="价格" width="100">
+                                <template #default="{row}">¥{{ row.price.toFixed(2) }}</template>
+                            </el-table-column>
+                            <el-table-column prop="stock" label="库存" width="100"></el-table-column>
+                            <el-table-column prop="status" label="状态" width="100">
+                                <template #default="{row}">
+                                    <el-tag :type="row.status === 1 ? 'success' : 'info'">
+                                        {{ row.status === 1 ? '上架' : '下架' }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="200">
+                                <template #default="{row}">
+                                    <el-button size="small" @click="editProduct(row)">编辑</el-button>
+                                    <el-button size="small" :type="row.status === 1 ? 'warning' : 'success'" 
+                                        @click="toggleStatus(row)">
+                                        {{ row.status === 1 ? '下架' : '上架' }}
+                                    </el-button>
+                                    <el-button size="small" type="danger" @click="deleteProduct(row.productId)">删除</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                    
+                    <!-- 订单管理 -->
+                    <div v-if="activeMenu === 'orders'">
+                        <h2 style="margin-bottom: 20px">订单管理</h2>
+                        <el-table :data="orders" v-loading="loading">
+                            <el-table-column prop="orderId" label="订单号"></el-table-column>
+                            <el-table-column prop="totalAmount" label="金额" width="100">
+                                <template #default="{row}">¥{{ row.totalAmount.toFixed(2) }}</template>
+                            </el-table-column>
+                            <el-table-column prop="status" label="状态" width="120">
+                                <template #default="{row}">
+                                    <el-tag :type="getStatusType(row.status)">
+                                        {{ getStatusText(row.status) }}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="createdAt" label="下单时间"></el-table-column>
+                            <el-table-column label="操作" width="150">
+                                <template #default="{row}">
+                                    <el-button size="small" @click="viewOrder(row)">查看</el-button>
+                                    <el-button v-if="row.status === 2" size="small" type="primary" 
+                                        @click="shipOrder(row)">发货</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </div>
+            </el-main>
+        </el-container>
+        
+        <!-- 商品编辑对话框 -->
+        <el-dialog v-model="productDialogVisible" :title="editingProduct ? '编辑商品' : '添加商品'" width="600px">
+            <el-form :model="productForm" label-width="100px">
+                <el-form-item label="商品名称">
+                    <el-input v-model="productForm.name"></el-input>
+                </el-form-item>
+                <el-form-item label="价格">
+                    <el-input-number v-model="productForm.price" :min="0" :precision="2"></el-input-number>
+                </el-form-item>
+                <el-form-item label="库存">
+                    <el-input-number v-model="productForm.stock" :min="0"></el-input-number>
+                </el-form-item>
+                <el-form-item label="描述">
+                    <el-input v-model="productForm.description" type="textarea" :rows="4"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="productDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveProduct">保存</el-button>
+            </template>
+        </el-dialog>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script src="https://unpkg.com/element-plus/icons-vue/dist/index.iife.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/merchant.js"></script>
+</body>
+</html>

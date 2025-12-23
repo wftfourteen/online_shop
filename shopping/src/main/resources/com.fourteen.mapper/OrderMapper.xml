@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fourteen.mapper.OrderMapper">
+    
+    <!-- 创建订单 - 使用动态SQL，address_id可选 -->
+    <insert id="addOrder" parameterType="com.fourteen.pojo.Order" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO orders (
+            user_id,
+            total_amount,
+            status
+            <if test="addressId != null">
+            , address_id
+            </if>
+            , remark
+            , created_at
+            , updated_at
+        ) VALUES (
+            #{userId},
+            #{totalAmount},
+            #{status}
+            <if test="addressId != null">
+            , #{addressId}
+            </if>
+            , #{remark}
+            , CURRENT_TIMESTAMP
+            , CURRENT_TIMESTAMP
+        )
+    </insert>
+    
+</mapper>

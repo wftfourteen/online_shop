@@ -25,6 +25,20 @@ public class AdminProductServiceImpl implements AdminProductService {
     @Override
     public Result addProduct(Product product) {
         try {
+            // 参数校验
+            if (product.getName() == null || product.getName().trim().isEmpty()) {
+                return Result.error("商品名称不能为空");
+            }
+            if (product.getPrice() == null || product.getPrice() <= 0) {
+                return Result.error("商品价格必须大于0");
+            }
+            // categoryId 可以为null（如果数据库允许），但如果有约束则必须提供
+            // 这里设置默认值1（假设1是默认分类）
+            if (product.getCategoryId() == null) {
+                product.setCategoryId(1); // 默认分类ID为1
+            }
+            
+            // 设置默认值
             product.setCreatedAt(LocalDateTime.now());
             product.setUpdatedAt(LocalDateTime.now());
             if (product.getStatus() == null) {
@@ -32,6 +46,9 @@ public class AdminProductServiceImpl implements AdminProductService {
             }
             if (product.getStock() == null) {
                 product.setStock(0);
+            }
+            if (product.getMainImage() == null || product.getMainImage().trim().isEmpty()) {
+                product.setMainImage("https://via.placeholder.com/400x400?text=No+Image");
             }
             
             productsMapper.addProduct(product);

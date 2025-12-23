@@ -3,70 +3,115 @@
         PUBLIC "-//mybatis.ac.cn//DTD Mapper 3.0//EN"
         "https://mybatis.ac.cn/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.fourteen.mapper.ProductsMapper">
-    <select id="list" resultType="com.fourteen.pojo.Product">
-        select product_id, name, category_id, price, stock, main_image, detail_images, 
-               description, status, created_at, updated_at
-        from products
+    <!-- 商品列表查询（仅查询上架商品） -->
+    <select id="list" parameterType="com.fourteen.pojo.ProductsQueryParam" resultType="com.fourteen.pojo.Product">
+        SELECT 
+            product_id, 
+            name, 
+            category_id, 
+            price, 
+            stock, 
+            main_image, 
+            detail_images, 
+            description, 
+            status, 
+            created_at, 
+            updated_at
+        FROM products
         <where>
+            <!-- 只查询上架商品 -->
             status = 1
+            <!-- 商品名称模糊搜索 -->
             <if test="name != null and name != ''">
-                and name like concat('%',#{name},'%')
+                AND name LIKE CONCAT('%', #{name}, '%')
             </if>
+            <!-- 价格区间筛选 -->
             <if test="minPrice != null">
-                and price &gt;= #{minPrice}
+                AND price &gt;= #{minPrice}
             </if>
             <if test="maxPrice != null">
-                and price &lt;= #{maxPrice}
+                AND price &lt;= #{maxPrice}
             </if>
+            <!-- 分类筛选 -->
             <if test="categoryId != null">
-                and category_id = #{categoryId}
+                AND category_id = #{categoryId}
             </if>
         </where>
+        <!-- 排序 -->
         <choose>
             <when test="sort == 'price_asc'">
-                order by price asc
+                ORDER BY price ASC, created_at DESC
             </when>
             <when test="sort == 'price_desc'">
-                order by price desc
+                ORDER BY price DESC, created_at DESC
             </when>
             <otherwise>
-                order by created_at desc
+                <!-- 默认按创建时间倒序，新商品在前 -->
+                ORDER BY created_at DESC, product_id DESC
             </otherwise>
         </choose>
     </select>
     
+    <!-- 根据ID查询商品详情 -->
     <select id="findById" resultType="com.fourteen.pojo.Product">
-        select product_id, name, category_id, price, stock, main_image, detail_images, 
-               description, status, created_at, updated_at
-        from products
-        where product_id = #{productId}
+        SELECT 
+            product_id, 
+            name, 
+            category_id, 
+            price, 
+            stock, 
+            main_image, 
+            detail_images, 
+            description, 
+            status, 
+            created_at, 
+            updated_at
+        FROM products
+        WHERE product_id = #{productId}
     </select>
     
     <!-- 查询所有商品（包括下架的），用于后台管理 -->
-    <select id="listAll" resultType="com.fourteen.pojo.Product">
-        select product_id, name, category_id, price, stock, main_image, detail_images, 
-               description, status, created_at, updated_at
-        from products
+    <select id="listAll" parameterType="com.fourteen.pojo.ProductsQueryParam" resultType="com.fourteen.pojo.Product">
+        SELECT 
+            product_id, 
+            name, 
+            category_id, 
+            price, 
+            stock, 
+            main_image, 
+            detail_images, 
+            description, 
+            status, 
+            created_at, 
+            updated_at
+        FROM products
         <where>
+            <!-- 商品名称模糊搜索 -->
             <if test="name != null and name != ''">
-                and name like concat('%',#{name},'%')
+                AND name LIKE CONCAT('%', #{name}, '%')
             </if>
+            <!-- 价格区间筛选 -->
             <if test="minPrice != null">
-                and price &gt;= #{minPrice}
+                AND price &gt;= #{minPrice}
             </if>
             <if test="maxPrice != null">
-                and price &lt;= #{maxPrice}
+                AND price &lt;= #{maxPrice}
+            </if>
+            <!-- 分类筛选 -->
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
             </if>
         </where>
+        <!-- 排序 -->
         <choose>
             <when test="sort == 'price_asc'">
-                order by price asc
+                ORDER BY price ASC, created_at DESC
             </when>
             <when test="sort == 'price_desc'">
-                order by price desc
+                ORDER BY price DESC, created_at DESC
             </when>
             <otherwise>
-                order by created_at desc
+                ORDER BY created_at DESC, product_id DESC
             </otherwise>
         </choose>
     </select>

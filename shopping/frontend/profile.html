@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div id="app">
+        <el-container class="app-container">
+            <el-header class="app-header">
+                <div class="header-content">
+                    <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
+                    <div class="header-right">
+                        <el-button @click="$router.push('/customer')">返回首页</el-button>
+                    </div>
+                </div>
+            </el-header>
+            <el-main>
+                <div class="profile-container">
+                    <div class="profile-sidebar">
+                        <div class="avatar-upload">
+                            <img :src="userInfo.avatar || '/default-avatar.png'" :alt="userInfo.username" class="avatar-preview">
+                            <el-upload
+                                :action="uploadUrl"
+                                :headers="uploadHeaders"
+                                :before-upload="beforeUpload"
+                                :on-success="handleAvatarSuccess"
+                                :show-file-list="false">
+                                <el-button type="primary">更换头像</el-button>
+                            </el-upload>
+                        </div>
+                    </div>
+                    <div class="profile-content">
+                        <h2>个人信息</h2>
+                        <el-form :model="form" label-width="100px" style="max-width: 600px; margin-top: 30px">
+                            <el-form-item label="用户名">
+                                <el-input v-model="form.username" @blur="updateUsername"></el-input>
+                            </el-form-item>
+                            <el-form-item label="邮箱">
+                                <el-input v-model="form.email" disabled></el-input>
+                            </el-form-item>
+                            <el-form-item label="角色">
+                                <el-tag :type="form.role === 1 ? 'success' : 'warning'">
+                                    {{ form.role === 1 ? '顾客' : '商家' }}
+                                </el-tag>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                </div>
+            </el-main>
+        </el-container>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="./js/api.js"></script>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    userInfo: {},
+                    form: {},
+                    uploadUrl: API_CONFIG.BASE_URL + '/user/avatar',
+                    uploadHeaders: {}
+                };
+            },
+            mounted() {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = './login.html';
+                    return;
+                }
+                this.uploadHeaders.Authorization = 'Bearer ' + token;
+                this.loadUserInfo();
+            },
+            methods: {
+                async loadUserInfo() {
+                    try {
+                        const res = await API.getUserInfo();
+                        if (res.code === 1) {
+                            this.userInfo = res.data;
+                            this.form = { ...res.data };
+                        }
+                    } catch (error) {
+                        ElMessage.error('加载用户信息失败');
+                    }
+                },
+                async updateUsername() {
+                    if (this.form.username === this.userInfo.username) return;
+                    try {
+                        await API.updateUserInfo({ username: this.form.username });
+                        ElMessage.success('更新成功');
+                        this.userInfo.username = this.form.username;
+                    } catch (error) {
+                        this.form.username = this.userInfo.username;
+                    }
+                },
+                beforeUpload(file) {
+                    const isImage = file.type.startsWith('image/');
+                    const isLt5M = file.size / 1024 / 1024 < 5;
+                    if (!isImage) {
+                        ElMessage.error('只能上传图片文件');
+                        return false;
+                    }
+                    if (!isLt5M) {
+                        ElMessage.error('图片大小不能超过5MB');
+                        return false;
+                    }
+                    return true;
+                },
+                async handleAvatarSuccess(res) {
+                    if (res.code === 1) {
+                        ElMessage.success('头像上传成功');
+                        await this.loadUserInfo();
+                    }
+                }
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
