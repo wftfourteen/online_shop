@@ -1,187 +1,207 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>支付成功</title>
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <link rel="stylesheet" href="./css/style.css">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-plus/dist/index.css"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
     <style>
-        .success-container {
-            max-width: 800px;
-            margin: 100px auto;
-            text-align: center;
-            background: white;
-            border-radius: 12px;
-            padding: 60px 40px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .success-icon {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 30px;
-            background: #67c23a;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .success-icon .el-icon {
-            font-size: 60px;
-            color: white;
-        }
-        .success-title {
-            font-size: 28px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 16px;
-        }
-        .success-message {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 40px;
-        }
-        .order-info {
-            background: #f5f7fa;
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 40px;
-            text-align: left;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            font-size: 16px;
-            border-bottom: 1px solid #e4e7ed;
-        }
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        .info-label {
-            color: #909399;
-        }
-        .info-value {
-            font-weight: 600;
-            color: #303133;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-        }
+      .success-container {
+        max-width: 800px;
+        margin: 100px auto;
+        text-align: center;
+        background: white;
+        border-radius: 12px;
+        padding: 60px 40px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+      .success-icon {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 30px;
+        background: #67c23a;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .success-icon .el-icon {
+        font-size: 60px;
+        color: white;
+      }
+      .success-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 16px;
+      }
+      .success-message {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 40px;
+      }
+      .order-info {
+        background: #f5f7fa;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 40px;
+        text-align: left;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        font-size: 16px;
+        border-bottom: 1px solid #e4e7ed;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        color: #909399;
+      }
+      .info-value {
+        font-weight: 600;
+        color: #303133;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="app">
-        <el-container class="app-container">
-            <el-header class="app-header">
-                <div class="header-content">
-                    <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
-                    <div class="header-right">
-                        <el-button @click="goHome">返回首页</el-button>
-                    </div>
-                </div>
-            </el-header>
-            <el-main>
-                <div class="success-container">
-                    <div class="success-icon">
-                        <el-icon><CircleCheck /></el-icon>
-                    </div>
-                    <div class="success-title">支付成功！</div>
-                    <div class="success-message">您的订单已成功支付，我们将尽快为您安排发货</div>
-                    
-                    <div v-if="orderInfo" class="order-info">
-                        <div class="info-row">
-                            <span class="info-label">订单号：</span>
-                            <span class="info-value">{{ orderInfo.orderId }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">支付金额：</span>
-                            <span class="info-value" style="color: #f56c6c; font-size: 20px">¥{{ orderInfo.amount?.toFixed(2) }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">支付方式：</span>
-                            <span class="info-value">{{ getPaymentMethodName(orderInfo.paymentMethod) }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">订单状态：</span>
-                            <el-tag type="success">已支付</el-tag>
-                        </div>
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <el-button @click="goHome">继续购物</el-button>
-                        <el-button type="primary" @click="goToOrders">查看订单</el-button>
-                    </div>
-                    
-                    <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #eee; color: #909399; font-size: 14px">
-                        <p>订单确认邮件已发送至您的邮箱，请注意查收</p>
-                        <p style="margin-top: 8px">如有疑问，请联系客服</p>
-                    </div>
-                </div>
-            </el-main>
-        </el-container>
+      <el-container class="app-container">
+        <el-header class="app-header">
+          <div class="header-content">
+            <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
+            <div class="header-right">
+              <el-button @click="goHome">返回首页</el-button>
+            </div>
+          </div>
+        </el-header>
+        <el-main>
+          <div class="success-container">
+            <div class="success-icon">
+              <el-icon><CircleCheck /></el-icon>
+            </div>
+            <div class="success-title">支付成功！</div>
+            <div class="success-message">
+              您的订单已成功支付，我们将尽快为您安排发货
+            </div>
+
+            <div v-if="orderInfo" class="order-info">
+              <div class="info-row">
+                <span class="info-label">订单号：</span>
+                <span class="info-value">{{ orderInfo.orderId }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">支付金额：</span>
+                <span class="info-value" style="color: #f56c6c; font-size: 20px"
+                  >¥{{ orderInfo.amount?.toFixed(2) }}</span
+                >
+              </div>
+              <div class="info-row">
+                <span class="info-label">支付方式：</span>
+                <span class="info-value"
+                  >{{ getPaymentMethodName(orderInfo.paymentMethod) }}</span
+                >
+              </div>
+              <div class="info-row">
+                <span class="info-label">订单状态：</span>
+                <el-tag type="success">已支付</el-tag>
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <el-button @click="goHome">继续购物</el-button>
+              <el-button type="primary" @click="goToOrders">查看订单</el-button>
+            </div>
+
+            <div
+              style="
+                margin-top: 40px;
+                padding-top: 30px;
+                border-top: 1px solid #eee;
+                color: #909399;
+                font-size: 14px;
+              "
+            >
+              <p>订单确认邮件已发送至您的邮箱，请注意查收</p>
+              <p style="margin-top: 8px">如有疑问，请联系客服</p>
+            </div>
+          </div>
+        </el-main>
+      </el-container>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
-    <script src="https://unpkg.com/element-plus/icons-vue/dist/index.iife.js"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.iife.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script>
-        const { createApp } = Vue;
-        const { ElContainer, ElHeader, ElMain, ElButton, ElTag, ElIcon } = ElementPlus;
-        const { CircleCheck } = ElementPlusIconsVue;
-        
-        createApp({
-            components: {
-                ElContainer,
-                ElHeader,
-                ElMain,
-                ElButton,
-                ElTag,
-                ElIcon,
-                CircleCheck
-            },
-            data() {
-                return {
-                    orderInfo: null
-                };
-            },
-            mounted() {
-                const paymentData = sessionStorage.getItem('paymentSuccess');
-                if (paymentData) {
-                    try {
-                        this.orderInfo = JSON.parse(paymentData);
-                        sessionStorage.removeItem('paymentSuccess');
-                    } catch (error) {
-                        console.error('解析支付数据失败', error);
-                    }
-                }
-                
-                if (!this.orderInfo) {
-                    ElMessage.warning('未找到订单信息');
-                    setTimeout(() => {
-                        window.location.href = './customer.html';
-                    }, 2000);
-                }
-            },
-            methods: {
-                getPaymentMethodName(method) {
-                    const methods = {
-                        'alipay': '支付宝',
-                        'wechat': '微信支付'
-                    };
-                    return methods[method] || method || '支付宝';
-                },
-                goHome() {
-                    window.location.href = './customer.html';
-                },
-                goToOrders() {
-                    window.location.href = './orders.html';
-                }
+      const { createApp } = Vue;
+      const { ElContainer, ElHeader, ElMain, ElButton, ElTag, ElIcon } =
+        ElementPlus;
+      const { CircleCheck } = ElementPlusIconsVue;
+
+      createApp({
+        components: {
+          ElContainer,
+          ElHeader,
+          ElMain,
+          ElButton,
+          ElTag,
+          ElIcon,
+          CircleCheck,
+        },
+        data() {
+          return {
+            orderInfo: null,
+          };
+        },
+        mounted() {
+          const paymentData = sessionStorage.getItem("paymentSuccess");
+          if (paymentData) {
+            try {
+              this.orderInfo = JSON.parse(paymentData);
+              sessionStorage.removeItem("paymentSuccess");
+            } catch (error) {
+              console.error("解析支付数据失败", error);
             }
-        }).use(ElementPlus).mount('#app');
+          }
+
+          if (!this.orderInfo) {
+            ElMessage.warning("未找到订单信息");
+            setTimeout(() => {
+              window.location.href = "./customer.html";
+            }, 2000);
+          }
+        },
+        methods: {
+          getPaymentMethodName(method) {
+            const methods = {
+              alipay: "支付宝",
+              wechat: "微信支付",
+            };
+            return methods[method] || method || "支付宝";
+          },
+          goHome() {
+            window.location.href = "./customer.html";
+          },
+          goToOrders() {
+            window.location.href = "./orders.html";
+          },
+        },
+      })
+        .use(ElementPlus)
+        .mount("#app");
     </script>
-</body>
+  </body>
 </html>

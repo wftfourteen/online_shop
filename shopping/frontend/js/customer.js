@@ -134,6 +134,24 @@ createApp({
             }
         },
         
+        getProductImage(imageUrl) {
+            if (!imageUrl) return '/default-product.png';
+            if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+            if (imageUrl.includes('oss') || imageUrl.includes('aliyuncs')) return imageUrl;
+            return API_CONFIG.BASE_URL + imageUrl;
+        },
+        
+        getAvatarUrl(avatarUrl) {
+            if (!avatarUrl) return '/default-avatar.png';
+            if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) return avatarUrl;
+            if (avatarUrl.includes('oss') || avatarUrl.includes('aliyuncs')) return avatarUrl;
+            return API_CONFIG.BASE_URL + avatarUrl;
+        },
+        
+        handleImageError(event) {
+            event.target.src = '/default-product.png';
+        },
+        
         async handleLogout() {
             try {
                 await API.logout();
@@ -143,10 +161,6 @@ createApp({
             localStorage.removeItem('token');
             localStorage.removeItem('userInfo');
             window.location.href = './index.html';
-        },
-        
-        handleImageError(event) {
-            event.target.src = 'https://via.placeholder.com/240x240?text=No+Image';
         }
     }
 }).use(ElementPlus).mount('#app');

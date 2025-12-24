@@ -35,4 +35,10 @@ public interface ProductsMapper {
     
     @Update("update products set status=#{status} where product_id=#{productId}")
     void updateProductStatus(Integer productId, Integer status);
+    
+    @Update("update products set main_image=#{imageUrl} where product_id=#{productId}")
+    void updateMainImage(Integer productId, String imageUrl);
+    
+    @Update("update products set detail_images=#{detailImages} where product_id=#{productId}")
+    void updateDetailImages(Integer productId, String detailImages);
 }

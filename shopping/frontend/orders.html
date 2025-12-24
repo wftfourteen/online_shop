@@ -1,165 +1,226 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>我的订单</title>
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <link rel="stylesheet" href="./css/style.css">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-plus/dist/index.css"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
     <style>
-        .orders-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .filter-tabs {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .order-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 16px;
-        }
-        .order-items {
-            margin-bottom: 16px;
-        }
-        .order-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f5f5f5;
-        }
-        .order-item:last-child {
-            border-bottom: none;
-        }
-        .order-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 16px;
-            border-top: 1px solid #eee;
-        }
-        .mini-image {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin-right: 12px;
-        }
+      .orders-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .filter-tabs {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .order-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 16px;
+      }
+      .order-items {
+        margin-bottom: 16px;
+      }
+      .order-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f5f5f5;
+      }
+      .order-item:last-child {
+        border-bottom: none;
+      }
+      .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+      }
+      .mini-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-right: 12px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="app">
-        <el-container class="app-container">
-            <el-header class="app-header">
-                <div class="header-content">
-                    <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
-                    <div class="header-right">
-                        <div class="cart-icon" @click="goToCart">
-                            <el-icon :size="24"><ShoppingCart /></el-icon>
-                            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
-                        </div>
-                        <el-dropdown @command="handleCommand">
-                            <span class="user-info">
-                                <el-avatar :src="userInfo.avatar" :size="32"></el-avatar>
-                                <span style="margin-left: 8px">{{ userInfo.username }}</span>
-                            </span>
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                                    <el-dropdown-item command="orders">我的订单</el-dropdown-item>
-                                    <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
-                        </el-dropdown>
+      <el-container class="app-container">
+        <el-header class="app-header">
+          <div class="header-content">
+            <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
+            <div class="header-right">
+              <div class="cart-icon" @click="goToCart">
+                <el-icon :size="24"><ShoppingCart /></el-icon>
+                <span v-if="cartCount > 0" class="cart-badge"
+                  >{{ cartCount }}</span
+                >
+              </div>
+              <el-dropdown @command="handleCommand">
+                <span class="user-info">
+                                <el-avatar :src="getAvatarUrl(userInfo.avatar)" :size="32"></el-avatar>
+                  <span style="margin-left: 8px">{{ userInfo.username }}</span>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="profile"
+                      >个人中心</el-dropdown-item
+                    >
+                    <el-dropdown-item command="orders"
+                      >我的订单</el-dropdown-item
+                    >
+                    <el-dropdown-item divided command="logout"
+                      >退出登录</el-dropdown-item
+                    >
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
+        </el-header>
+        <el-main>
+          <div class="orders-container">
+            <h2 style="margin-bottom: 20px">我的订单</h2>
+
+            <div class="filter-tabs">
+              <el-radio-group
+                v-model="filterStatus"
+                @change="loadOrders"
+                size="large"
+              >
+                <el-radio-button :label="null">全部</el-radio-button>
+                <el-radio-button :label="1">待支付</el-radio-button>
+                <el-radio-button :label="2">已支付</el-radio-button>
+                <el-radio-button :label="3">已发货</el-radio-button>
+                <el-radio-button :label="4">已完成</el-radio-button>
+                <el-radio-button :label="5">已取消</el-radio-button>
+              </el-radio-group>
+            </div>
+
+            <div v-loading="loading">
+              <div v-if="orders.length === 0 && !loading" class="empty-state">
+                <el-empty description="暂无订单">
+                  <el-button type="primary" @click="goShopping"
+                    >去购物</el-button
+                  >
+                </el-empty>
+              </div>
+
+              <div v-else>
+                <div
+                  v-for="order in orders"
+                  :key="order.orderId"
+                  class="order-card"
+                >
+                  <div class="order-header">
+                    <div>
+                      <span style="color: #999">订单号：</span>
+                      <span style="font-weight: 600">{{ order.orderId }}</span>
+                      <span style="margin-left: 20px; color: #999"
+                        >下单时间：{{ formatDate(order.createdAt) }}</span
+                      >
                     </div>
+                    <el-tag :type="getStatusType(order.status)">
+                      {{ getStatusText(order.status) }}
+                    </el-tag>
+                  </div>
+
+                  <div class="order-items">
+                    <div
+                      v-for="item in order.items"
+                      :key="item.orderItemId || item.productId"
+                      class="order-item"
+                    >
+                      <img
+                        :src="getProductImage(item.productImage)"
+                        @error="handleImageError"
+                        :alt="item.productName"
+                        class="mini-image"
+                      />
+                      <div style="flex: 1">
+                        <div style="font-weight: 600; margin-bottom: 4px">
+                          {{ item.productName }}
+                        </div>
+                        <div style="color: #999; font-size: 14px">
+                          数量：{{ item.quantity }}
+                        </div>
+                      </div>
+                      <div
+                        style="
+                          width: 100px;
+                          text-align: right;
+                          color: #f56c6c;
+                          font-weight: 600;
+                        "
+                      >
+                        ¥{{ item.subtotal.toFixed(2) }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="order-footer">
+                    <div style="font-size: 18px; font-weight: 600">
+                      实付金额：<span style="color: #f56c6c"
+                        >¥{{ order.totalAmount.toFixed(2) }}</span
+                      >
+                    </div>
+                    <div>
+                      <el-button
+                        v-if="order.status === 1"
+                        type="danger"
+                        @click="payOrder(order.orderId)"
+                        >立即支付</el-button
+                      >
+                      <el-button
+                        v-if="order.status === 1"
+                        @click="cancelOrder(order.orderId)"
+                        >取消订单</el-button
+                      >
+                      <el-button
+                        v-if="order.status === 3"
+                        type="success"
+                        @click="confirmReceipt(order.orderId)"
+                        >确认收货</el-button
+                      >
+                      <el-button @click="viewDetail(order.orderId)"
+                        >查看详情</el-button
+                      >
+                    </div>
+                  </div>
                 </div>
-            </el-header>
-            <el-main>
-                <div class="orders-container">
-                    <h2 style="margin-bottom: 20px">我的订单</h2>
-                    
-                    <div class="filter-tabs">
-                        <el-radio-group v-model="filterStatus" @change="loadOrders" size="large">
-                            <el-radio-button :label="null">全部</el-radio-button>
-                            <el-radio-button :label="1">待支付</el-radio-button>
-                            <el-radio-button :label="2">已支付</el-radio-button>
-                            <el-radio-button :label="3">已发货</el-radio-button>
-                            <el-radio-button :label="4">已完成</el-radio-button>
-                            <el-radio-button :label="5">已取消</el-radio-button>
-                        </el-radio-group>
-                    </div>
-                    
-                    <div v-loading="loading">
-                        <div v-if="orders.length === 0 && !loading" class="empty-state">
-                            <el-empty description="暂无订单">
-                                <el-button type="primary" @click="goShopping">去购物</el-button>
-                            </el-empty>
-                        </div>
-                        
-                        <div v-else>
-                            <div v-for="order in orders" :key="order.orderId" class="order-card">
-                                <div class="order-header">
-                                    <div>
-                                        <span style="color: #999">订单号：</span>
-                                        <span style="font-weight: 600">{{ order.orderId }}</span>
-                                        <span style="margin-left: 20px; color: #999">下单时间：{{ formatDate(order.createdAt) }}</span>
-                                    </div>
-                                    <el-tag :type="getStatusType(order.status)">
-                                        {{ getStatusText(order.status) }}
-                                    </el-tag>
-                                </div>
-                                
-                                <div class="order-items">
-                                    <div v-for="item in order.items" :key="item.orderItemId || item.productId" class="order-item">
-                                        <img :src="item.productImage || '/default-product.png'" :alt="item.productName" class="mini-image">
-                                        <div style="flex: 1">
-                                            <div style="font-weight: 600; margin-bottom: 4px">{{ item.productName }}</div>
-                                            <div style="color: #999; font-size: 14px">数量：{{ item.quantity }}</div>
-                                        </div>
-                                        <div style="width: 100px; text-align: right; color: #f56c6c; font-weight: 600">
-                                            ¥{{ item.subtotal.toFixed(2) }}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="order-footer">
-                                    <div style="font-size: 18px; font-weight: 600">
-                                        实付金额：<span style="color: #f56c6c">¥{{ order.totalAmount.toFixed(2) }}</span>
-                                    </div>
-                                    <div>
-                                        <el-button v-if="order.status === 1" type="danger" @click="payOrder(order.orderId)">立即支付</el-button>
-                                        <el-button v-if="order.status === 1" @click="cancelOrder(order.orderId)">取消订单</el-button>
-                                        <el-button v-if="order.status === 3" type="success" @click="confirmReceipt(order.orderId)">确认收货</el-button>
-                                        <el-button @click="viewDetail(order.orderId)">查看详情</el-button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </el-main>
-        </el-container>
+              </div>
+            </div>
+          </div>
+        </el-main>
+      </el-container>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
-    <script src="https://unpkg.com/element-plus/icons-vue/dist/index.iife.js"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.iife.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="./js/api.js"></script>
     <script src="./js/orders.js"></script>
-</body>
+  </body>
 </html>

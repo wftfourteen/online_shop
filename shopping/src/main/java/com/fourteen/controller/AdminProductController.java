@@ -85,5 +85,29 @@ public class AdminProductController {
         log.info("更新商品库存：userId={}, productId={}, stock={}", userId, productId, stock);
         return adminProductService.updateProductStock(productId, stock);
     }
+
+    /**
+     * 上传商品主图
+     */
+    @PostMapping("/{productId}/main-image")
+    public Result uploadMainImage(HttpServletRequest request,
+                                  @PathVariable Integer productId,
+                                  @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        log.info("上传商品主图：userId={}, productId={}", userId, productId);
+        return adminProductService.uploadMainImage(productId, file);
+    }
+
+    /**
+     * 上传商品详情图
+     */
+    @PostMapping("/{productId}/detail-images")
+    public Result uploadDetailImages(HttpServletRequest request,
+                                     @PathVariable Integer productId,
+                                     @RequestParam("files") org.springframework.web.multipart.MultipartFile[] files) {
+        Integer userId = (Integer) request.getAttribute("userId");
+        log.info("上传商品详情图：userId={}, productId={}, fileCount={}", userId, productId, files.length);
+        return adminProductService.uploadDetailImages(productId, files);
+    }
 }
 

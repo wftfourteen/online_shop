@@ -11,9 +11,11 @@ import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -21,6 +23,9 @@ public class AdminProductServiceImpl implements AdminProductService {
     
     @Autowired
     private ProductsMapper productsMapper;
+    
+    @Autowired
+    private com.fourteen.service.OssService ossService;
 
     @Override
     public Result addProduct(Product product) {
@@ -147,6 +152,76 @@ public class AdminProductServiceImpl implements AdminProductService {
         } catch (Exception e) {
             log.error("更新商品库存失败", e);
             return Result.error("更新商品库存失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result uploadMainImage(Integer productId, MultipartFile file) {
+        try {
+            // 验证商品是否存在
+            Product product = productsMapper.findById(productId);
+            if (product == null) {
+                return Result.error("商品不存在");
+            }
+            
+            // 使用OSS上传文件
+            String imageUrl = ossService.uploadFile(file, "products/");
+            
+            // 更新商品主图URL（保存完整的OSS URL）
+            productsMapper.updateMainImage(productId, imageUrl);
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("imageUrl", imageUrl);
+            log.info("商品主图上传成功：productId={}, imageUrl={}", productId, imageUrl);
+            return Result.success(data);
+            
+        } catch (Exception e) {
+            log.error("商品主图上传失败", e);
+            return Result.error("商品主图上传失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result uploadDetailImages(Integer productId, MultipartFile[] files) {
+        try {
+            // 验证商品是否存在
+            Product product = productsMapper.findById(productId);
+            if (product == null) {
+                return Result.error("商品不存在");
+            }
+            
+            // 验证文件
+            if (files == null || files.length == 0) {
+                return Result.error("请选择要上传的文件");
+            }
+            
+            // 验证文件数量
+            if (files.length > 10) {
+                return Result.error("最多只能上传10张详情图");
+            }
+            
+            // 使用OSS批量上传文件
+            List<String> imageUrls = ossService.uploadFiles(files, "products/");
+            
+            if (imageUrls.isEmpty()) {
+                return Result.error("没有成功上传的图片");
+            }
+            
+            // 更新商品详情图URL（JSON格式存储）
+            // 使用简单的JSON格式：["url1","url2","url3"]
+            String detailImagesJson = "[" + imageUrls.stream()
+                    .map(url -> "\"" + url.replace("\"", "\\\"") + "\"")
+                    .collect(Collectors.joining(",")) + "]";
+            productsMapper.updateDetailImages(productId, detailImagesJson);
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("imageUrls", imageUrls);
+            log.info("商品详情图上传成功：productId={}, count={}", productId, imageUrls.size());
+            return Result.success(data);
+            
+        } catch (Exception e) {
+            log.error("商品详情图上传失败", e);
+            return Result.error("商品详情图上传失败：" + e.getMessage());
         }
     }
 }

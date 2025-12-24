@@ -28,6 +28,18 @@ spring:
 server:
   port: 1414  # 服务器端口
 
+# 阿里云OSS配置
+aliyun:
+  oss:
+    endpoint: https://oss-cn-beijing.aliyuncs.com   # OSS endpoint，根据实际区域修改
+    access-key-id: LTAI5tFaBcUS6ENKQLyX54MS  # 替换为你的AccessKey ID
+    access-key-secret: xYcEMbsjZo5rG3iHoe0OGq9Xrf3SdN  # 替换为你的AccessKey Secret
+    bucket-name: wftshopping  # 替换为你的Bucket名称
+    url-prefix: https://wftshopping.oss-cn-beijing.aliyuncs.com  # OSS访问URL前缀
+    folder:
+      avatar: avatars/  # 头像存储文件夹
+      product: products/  # 商品图片存储文件夹
+
 mybatis:
   mapper-locations: classpath:com.fourteen.mapper/*.xml
   type-aliases-package: com.fourteen.pojo

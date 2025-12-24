@@ -201,6 +201,24 @@ const API = {
         return api.put(`/admin/products/${productId}/stock`, { stock });
     },
     
+    adminUploadMainImage(productId, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post(`/admin/products/${productId}/main-image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+    
+    adminUploadDetailImages(productId, files) {
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
+        return api.post(`/admin/products/${productId}/detail-images`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+    
     // 商家订单管理
     adminGetOrderList(page = 1, pageSize = 20, status) {
         return api.get('/admin/orders', { params: { page, pageSize, status } });

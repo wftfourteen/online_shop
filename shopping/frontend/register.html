@@ -1,97 +1,114 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>注册 - 在线购物平台</title>
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <link rel="stylesheet" href="./css/style.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-plus/dist/index.css"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
     <div id="app">
-        <div class="auth-container">
-            <el-card class="auth-card">
-                <template #header>
-                    <div class="auth-header">
-                        <h2>注册</h2>
-                        <p>创建您的账号，开始购物之旅</p>
-                    </div>
-                </template>
-                <div class="auth-body">
-                    <el-form :model="registerForm" :rules="rules" ref="registerFormRef" label-width="0">
-                        <el-form-item prop="role">
-                            <el-radio-group v-model="registerForm.role" size="large" class="role-selector">
-                                <el-radio-button :label="1">顾客</el-radio-button>
-                                <el-radio-button :label="2">商家</el-radio-button>
-                            </el-radio-group>
-                        </el-form-item>
-                        <el-form-item prop="username">
-                            <el-input 
-                                v-model="registerForm.username" 
-                                placeholder="请输入用户名"
-                                size="large"
-                                :prefix-icon="User"
-                                @blur="checkUsername">
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item prop="email">
-                            <el-input 
-                                v-model="registerForm.email" 
-                                placeholder="请输入邮箱"
-                                size="large"
-                                :prefix-icon="Message"
-                                @blur="checkEmail">
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item prop="password">
-                            <el-input 
-                                v-model="registerForm.password" 
-                                type="password" 
-                                placeholder="请输入密码（至少6位）"
-                                size="large"
-                                :prefix-icon="Lock"
-                                show-password>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item prop="confirmPassword">
-                            <el-input 
-                                v-model="registerForm.confirmPassword" 
-                                type="password" 
-                                placeholder="请再次输入密码"
-                                size="large"
-                                :prefix-icon="Lock"
-                                show-password>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item>
-                            <el-button 
-                                type="primary" 
-                                size="large" 
-                                style="width: 100%"
-                                :loading="loading"
-                                @click="handleRegister">
-                                注册
-                            </el-button>
-                        </el-form-item>
-                    </el-form>
-                </div>
-                <template #footer>
-                    <div class="auth-footer">
-                        已有账号？
-                        <a href="./login.html">立即登录</a>
-                        <span style="margin: 0 8px">|</span>
-                        <a href="./index.html">返回首页</a>
-                    </div>
-                </template>
-            </el-card>
-        </div>
+      <div class="auth-container">
+        <el-card class="auth-card">
+          <template #header>
+            <div class="auth-header">
+              <h2>注册</h2>
+              <p>创建您的账号，开始购物之旅</p>
+            </div>
+          </template>
+          <div class="auth-body">
+            <el-form
+              :model="registerForm"
+              :rules="rules"
+              ref="registerFormRef"
+              label-width="0"
+            >
+              <el-form-item prop="role">
+                <el-radio-group
+                  v-model="registerForm.role"
+                  size="large"
+                  class="role-selector"
+                >
+                  <el-radio-button :label="1">顾客</el-radio-button>
+                  <el-radio-button :label="2">商家</el-radio-button>
+                </el-radio-group>
+              </el-form-item>
+              <el-form-item prop="username">
+                <el-input
+                  v-model="registerForm.username"
+                  placeholder="请输入用户名"
+                  size="large"
+                  :prefix-icon="User"
+                  @blur="checkUsername"
+                >
+                </el-input>
+              </el-form-item>
+              <el-form-item prop="email">
+                <el-input
+                  v-model="registerForm.email"
+                  placeholder="请输入邮箱"
+                  size="large"
+                  :prefix-icon="Message"
+                  @blur="checkEmail"
+                >
+                </el-input>
+              </el-form-item>
+              <el-form-item prop="password">
+                <el-input
+                  v-model="registerForm.password"
+                  type="password"
+                  placeholder="请输入密码（至少6位）"
+                  size="large"
+                  :prefix-icon="Lock"
+                  show-password
+                >
+                </el-input>
+              </el-form-item>
+              <el-form-item prop="confirmPassword">
+                <el-input
+                  v-model="registerForm.confirmPassword"
+                  type="password"
+                  placeholder="请再次输入密码"
+                  size="large"
+                  :prefix-icon="Lock"
+                  show-password
+                >
+                </el-input>
+              </el-form-item>
+              <el-form-item>
+                <el-button
+                  type="primary"
+                  size="large"
+                  style="width: 100%"
+                  :loading="loading"
+                  @click="handleRegister"
+                >
+                  注册
+                </el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+          <template #footer>
+            <div class="auth-footer">
+              已有账号？
+              <a href="./login.html">立即登录</a>
+              <span style="margin: 0 8px">|</span>
+              <a href="./index.html">返回首页</a>
+            </div>
+          </template>
+        </el-card>
+      </div>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
-    <script src="https://unpkg.com/element-plus/icons-vue/dist/index.iife.js"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.iife.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="./js/api.js"></script>
     <script src="./js/register.js"></script>
-</body>
+  </body>
 </html>

@@ -19,5 +19,9 @@ public interface AdminProductService {
     Result updateProductStatus(Integer productId, Integer status);
     
     Result updateProductStock(Integer productId, Integer stock);
+    
+    Result uploadMainImage(Integer productId, org.springframework.web.multipart.MultipartFile file);
+    
+    Result uploadDetailImages(Integer productId, org.springframework.web.multipart.MultipartFile[] files);
 }
 

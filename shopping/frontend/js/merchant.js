@@ -1,8 +1,8 @@
 const { createApp } = Vue;
 const { ElContainer, ElHeader, ElMain, ElMenu, ElMenuItem, ElTable, ElTableColumn, 
     ElButton, ElTag, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElAvatar,
-    ElDropdown, ElDropdownMenu, ElDropdownItem, ElMessage, ElMessageBox } = ElementPlus;
-const { Goods, List } = ElementPlusIconsVue;
+    ElDropdown, ElDropdownMenu, ElDropdownItem, ElMessage, ElMessageBox, ElUpload } = ElementPlus;
+const { Goods, List, Delete } = ElementPlusIconsVue;
 
 function checkAuth() {
     const token = localStorage.getItem('token');
@@ -35,9 +35,11 @@ createApp({
         ElDropdown,
         ElDropdownMenu,
         ElDropdownItem,
+        ElUpload,
         ElIcon: ElementPlus.ElIcon,
         Goods,
-        List
+        List,
+        Delete
     },
     data() {
         return {
@@ -52,8 +54,13 @@ createApp({
                 name: '',
                 price: 0,
                 stock: 0,
-                description: ''
-            }
+                description: '',
+                mainImage: '',
+                detailImages: ''
+            },
+            detailImageList: [],
+            mainImageFile: null,
+            detailImageFiles: []
         };
     },
     mounted() {
@@ -102,25 +109,117 @@ createApp({
         
         showProductDialog() {
             this.editingProduct = null;
-            this.productForm = { name: '', price: 0, stock: 0, description: '' };
+            this.productForm = { name: '', price: 0, stock: 0, description: '', mainImage: '', detailImages: '' };
+            this.detailImageList = [];
+            this.mainImageFile = null;
+            this.detailImageFiles = [];
             this.productDialogVisible = true;
         },
         
         editProduct(product) {
             this.editingProduct = product;
             this.productForm = { ...product };
+            // 解析详情图
+            if (product.detailImages) {
+                try {
+                    this.detailImageList = JSON.parse(product.detailImages);
+                } catch (e) {
+                    this.detailImageList = [];
+                }
+            } else {
+                this.detailImageList = [];
+            }
+            this.mainImageFile = null;
+            this.detailImageFiles = [];
             this.productDialogVisible = true;
+        },
+        
+        getImageUrl(url) {
+            if (!url) return '/default-product.png';
+            // 如果已经是完整URL（http或https开头），直接返回
+            if (url.startsWith('http://') || url.startsWith('https://')) return url;
+            // 如果是OSS URL，直接返回
+            if (url.includes('oss')) return url;
+            // 否则拼接基础URL
+            return API_CONFIG.BASE_URL + url;
+        },
+        
+        handleImageError(event) {
+            event.target.src = '/default-product.png';
+        },
+        
+        getAvatarUrl(avatar) {
+            if (!avatar) return '/default-avatar.png';
+            if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar;
+            if (avatar.includes('oss')) return avatar;
+            return API_CONFIG.BASE_URL + avatar;
+        },
+        
+        handleMainImageChange(file) {
+            this.mainImageFile = file.raw;
+        },
+        
+        handleDetailImagesChange(file, fileList) {
+            this.detailImageFiles = fileList.map(f => f.raw).filter(f => f);
+        },
+        
+        removeDetailImage(index) {
+            this.detailImageList.splice(index, 1);
         },
         
         async saveProduct() {
             try {
+                let productId;
                 if (this.editingProduct) {
+                    // 更新详情图JSON
+                    this.productForm.detailImages = this.detailImageList.length > 0 
+                        ? JSON.stringify(this.detailImageList) 
+                        : '';
                     await API.adminUpdateProduct(this.editingProduct.productId, this.productForm);
+                    productId = this.editingProduct.productId;
                     ElMessage.success('更新成功');
                 } else {
-                    await API.adminAddProduct(this.productForm);
+                    const res = await API.adminAddProduct(this.productForm);
+                    if (res.code === 1 && res.data) {
+                        productId = res.data.productId;
+                    }
                     ElMessage.success('添加成功');
                 }
+                
+                // 上传主图
+                if (this.mainImageFile && productId) {
+                    try {
+                        const uploadRes = await API.adminUploadMainImage(productId, this.mainImageFile);
+                        if (uploadRes.code === 1 && uploadRes.data) {
+                            this.productForm.mainImage = uploadRes.data.imageUrl;
+                            ElMessage.success('主图上传成功');
+                        }
+                    } catch (error) {
+                        ElMessage.warning('主图上传失败');
+                    }
+                }
+                
+                // 上传详情图
+                if (this.detailImageFiles.length > 0 && productId) {
+                    try {
+                        await API.adminUploadDetailImages(productId, this.detailImageFiles);
+                        ElMessage.success('详情图上传成功');
+                        // 重新加载商品信息以获取最新的图片URL
+                        const productRes = await API.adminGetProductDetail(productId);
+                        if (productRes.code === 1 && productRes.data) {
+                            if (productRes.data.detailImages) {
+                                try {
+                                    this.detailImageList = JSON.parse(productRes.data.detailImages);
+                                } catch (e) {
+                                    this.detailImageList = [];
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        ElMessage.warning('详情图上传失败');
+                    }
+                }
+                
                 this.productDialogVisible = false;
                 this.loadProducts();
             } catch (error) {

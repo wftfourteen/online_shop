@@ -1,166 +1,186 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>商品详情</title>
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <link rel="stylesheet" href="./css/style.css">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-plus/dist/index.css"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
     <style>
-        .detail-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-        }
-        .product-main {
-            display: grid;
-            grid-template-columns: 500px 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-        .product-images {
-            position: sticky;
-            top: 20px;
-        }
-        .main-image {
-            width: 100%;
-            height: 500px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        .thumbnail-list {
-            display: flex;
-            gap: 8px;
-        }
-        .thumbnail {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        .thumbnail.active {
-            border-color: #409eff;
-        }
-        .product-info h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        .product-price {
-            font-size: 32px;
-            color: #f56c6c;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        .product-stock {
-            margin-bottom: 20px;
-            color: #666;
-        }
-        .quantity-selector {
-            margin-bottom: 30px;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 16px;
-        }
-        .description {
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 1px solid #eee;
-        }
+      .detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+      }
+      .product-main {
+        display: grid;
+        grid-template-columns: 500px 1fr;
+        gap: 40px;
+        margin-bottom: 40px;
+      }
+      .product-images {
+        position: sticky;
+        top: 20px;
+      }
+      .main-image {
+        width: 100%;
+        height: 500px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+      .thumbnail-list {
+        display: flex;
+        gap: 8px;
+      }
+      .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+      .thumbnail.active {
+        border-color: #409eff;
+      }
+      .product-info h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .product-price {
+        font-size: 32px;
+        color: #f56c6c;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+      .product-stock {
+        margin-bottom: 20px;
+        color: #666;
+      }
+      .quantity-selector {
+        margin-bottom: 30px;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 16px;
+      }
+      .description {
+        margin-top: 40px;
+        padding-top: 40px;
+        border-top: 1px solid #eee;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="app">
-        <el-container class="app-container">
-            <el-header class="app-header">
-                <div class="header-content">
-                    <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
-                    <div class="header-right">
-                        <div class="cart-icon" @click="goToCart">
-                            <el-icon :size="24"><ShoppingCart /></el-icon>
-                            <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
-                        </div>
-                    </div>
+      <el-container class="app-container">
+        <el-header class="app-header">
+          <div class="header-content">
+            <a href="./customer.html" class="logo-link">🛒 在线购物平台</a>
+            <div class="header-right">
+              <div class="cart-icon" @click="goToCart">
+                <el-icon :size="24"><ShoppingCart /></el-icon>
+                <span v-if="cartCount > 0" class="cart-badge"
+                  >{{ cartCount }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </el-header>
+        <el-main>
+          <div v-loading="loading" class="detail-container">
+            <div v-if="product" class="product-main">
+              <div class="product-images">
+                <img
+                  :src="currentImage"
+                  :alt="product.name"
+                  class="main-image"
+                  @click="showImagePreview = true"
+                />
+                <div class="thumbnail-list">
+                  <img
+                    v-for="(img, index) in product.images"
+                    :key="index"
+                    :src="getProductImageUrl(img)"
+                    :alt="product.name"
+                    class="thumbnail"
+                    :class="{ active: currentImageIndex === index }"
+                    @click="currentImageIndex = index"
+                  />
                 </div>
-            </el-header>
-            <el-main>
-                <div v-loading="loading" class="detail-container">
-                    <div v-if="product" class="product-main">
-                        <div class="product-images">
-                            <img :src="currentImage" :alt="product.name" class="main-image" @click="showImagePreview = true">
-                            <div class="thumbnail-list">
-                                <img 
-                                    v-for="(img, index) in product.images" 
-                                    :key="index"
-                                    :src="img" 
-                                    :alt="product.name"
-                                    class="thumbnail"
-                                    :class="{ active: currentImageIndex === index }"
-                                    @click="currentImageIndex = index">
-                            </div>
-                        </div>
-                        <div class="product-info">
-                            <h1>{{ product.name }}</h1>
-                            <div class="product-price">¥{{ product.price.toFixed(2) }}</div>
-                            <div class="product-stock">
-                                库存: {{ product.stock }} 件
-                                <el-tag v-if="product.stock <= 10" type="warning" style="margin-left: 10px">库存紧张</el-tag>
-                            </div>
-                            <div class="quantity-selector">
-                                <span style="margin-right: 16px">数量：</span>
-                                <el-input-number 
-                                    v-model="quantity" 
-                                    :min="1" 
-                                    :max="product.stock"
-                                    :disabled="product.stock === 0">
-                                </el-input-number>
-                            </div>
-                            <div class="action-buttons">
-                                <el-button 
-                                    type="warning" 
-                                    size="large"
-                                    :disabled="product.stock === 0"
-                                    @click="addToCart">
-                                    <el-icon><ShoppingCart /></el-icon>
-                                    加入购物车
-                                </el-button>
-                                <el-button 
-                                    type="danger" 
-                                    size="large"
-                                    :disabled="product.stock === 0"
-                                    @click="buyNow">
-                                    <el-icon><ShoppingBag /></el-icon>
-                                    立即购买
-                                </el-button>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-if="product" class="description">
-                        <h2>商品详情</h2>
-                        <div v-html="product.description" style="margin-top: 20px"></div>
-                    </div>
+              </div>
+              <div class="product-info">
+                <h1>{{ product.name }}</h1>
+                <div class="product-price">¥{{ product.price.toFixed(2) }}</div>
+                <div class="product-stock">
+                  库存: {{ product.stock }} 件
+                  <el-tag
+                    v-if="product.stock <= 10"
+                    type="warning"
+                    style="margin-left: 10px"
+                    >库存紧张</el-tag
+                  >
                 </div>
-            </el-main>
-        </el-container>
-        
-        <el-image-viewer 
-            v-if="showImagePreview"
-            :url-list="product?.images || []"
-            :initial-index="currentImageIndex"
-            @close="showImagePreview = false">
-        </el-image-viewer>
+                <div class="quantity-selector">
+                  <span style="margin-right: 16px">数量：</span>
+                  <el-input-number
+                    v-model="quantity"
+                    :min="1"
+                    :max="product.stock"
+                    :disabled="product.stock === 0"
+                  >
+                  </el-input-number>
+                </div>
+                <div class="action-buttons">
+                  <el-button
+                    type="warning"
+                    size="large"
+                    :disabled="product.stock === 0"
+                    @click="addToCart"
+                  >
+                    <el-icon><ShoppingCart /></el-icon>
+                    加入购物车
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    size="large"
+                    :disabled="product.stock === 0"
+                    @click="buyNow"
+                  >
+                    <el-icon><ShoppingBag /></el-icon>
+                    立即购买
+                  </el-button>
+                </div>
+              </div>
+            </div>
+            <div v-if="product" class="description">
+              <h2>商品详情</h2>
+              <div v-html="product.description" style="margin-top: 20px"></div>
+            </div>
+          </div>
+        </el-main>
+      </el-container>
+
+      <el-image-viewer
+        v-if="showImagePreview"
+        :url-list="getImageList()"
+        :initial-index="currentImageIndex"
+        @close="showImagePreview = false"
+      >
+      </el-image-viewer>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
-    <script src="https://unpkg.com/element-plus/icons-vue/dist/index.iife.js"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.iife.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="./js/api.js"></script>
     <script src="./js/product-detail.js"></script>
-</body>
+  </body>
 </html>

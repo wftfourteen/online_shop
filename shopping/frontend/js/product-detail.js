@@ -27,7 +27,8 @@ createApp({
     computed: {
         currentImage() {
             if (this.product && this.product.images && this.product.images.length > 0) {
-                return this.product.images[this.currentImageIndex] || this.product.images[0];
+                const img = this.product.images[this.currentImageIndex] || this.product.images[0];
+                return this.getProductImageUrl(img);
             }
             return '/default-product.png';
         }
@@ -134,6 +135,20 @@ createApp({
         
         goToCart() {
             window.location.href = './cart.html';
+        },
+        
+        getProductImageUrl(imageUrl) {
+            if (!imageUrl) return '/default-product.png';
+            if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+            if (imageUrl.includes('oss') || imageUrl.includes('aliyuncs')) return imageUrl;
+            return API_CONFIG.BASE_URL + imageUrl;
+        },
+        
+        getImageList() {
+            if (!this.product || !this.product.images || this.product.images.length === 0) {
+                return ['/default-product.png'];
+            }
+            return this.product.images.map(img => this.getProductImageUrl(img));
         }
     }
 }).use(ElementPlus).mount('#app');
